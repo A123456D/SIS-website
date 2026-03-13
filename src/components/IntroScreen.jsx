@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LOGO_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69a7f7821d46170dddc263a8/3e4a36fab_background-removed1.png";
+const LOGO_URL = "/assets/logo.png";
 
 export default function IntroScreen({ onComplete }) {
   const [visible, setVisible] = useState(true);

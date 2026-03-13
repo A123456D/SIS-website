@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LOGO_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69a7f7821d46170dddc263a8/3e4a36fab_background-removed1.png";
+const LOGO_URL = "/assets/logo.png";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();

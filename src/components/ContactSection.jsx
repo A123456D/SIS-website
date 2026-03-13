@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
 
-const LOGO_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69a7f7821d46170dddc263a8/3e4a36fab_background-removed1.png";
+const LOGO_URL = "/assets/logo.png";
 
 const contactInfo = [
   {

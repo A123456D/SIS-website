@@ -8,7 +8,7 @@ export default function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-          src="https://media.base44.com/images/public/69a7f7821d46170dddc263a8/727de3a56_generated_image.png"
+          src="/assets/hero-bg.png"
           alt="Hero background"
           className="w-full h-full object-cover"
         />
