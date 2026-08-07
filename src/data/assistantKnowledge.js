@@ -1,0 +1,437 @@
+/**
+ * Pip conversation engine — navigation-first (snap to page sections),
+ * then answers from site knowledge about services and company info.
+ */
+import { services } from '@/data/services';
+import { PIP_KNOWLEDGE, CONTACT } from '@/data/siteKnowledge';
+import {
+  PAGE_SECTIONS,
+  matchJumpIntent,
+  jumpReply,
+  buildJumpMenuReply,
+  buildWelcomeMessage,
+} from '@/data/pipNav';
+
+export { PAGE_SECTIONS } from '@/data/pipNav';
+
+export const WHATSAPP_ASSISTANT_URL = whatsappUrl(
+  'Hi Jean, I have a question from the SIS website assistant.'
+);
+
+export function whatsappUrl(text) {
+  return `${CONTACT.whatsappBase}?text=${encodeURIComponent(text)}`;
+}
+
+export function getServiceMenu() {
+  return services.map((service) => ({
+    id: service.id,
+    title: service.title,
+    summary: service.summary,
+    path: `/services/${service.id}`,
+  }));
+}
+
+export function buildServicesReply() {
+  return {
+    text: 'Here’s what we offer — tap a service for the full page, or ask me anything about them.',
+    services: getServiceMenu(),
+    sectionId: 'services',
+    sectionLabel: 'Services overview',
+    showWhatsApp: true,
+    emotion: 'happy',
+    topic: 'services',
+    followUps: [
+      'Do you do solar for commercial?',
+      'Rural internet / MikroTik?',
+      'How do I get a quote?',
+    ],
+    whatsappHref: WHATSAPP_ASSISTANT_URL,
+  };
+}
+
+export const WELCOME_MESSAGE = buildWelcomeMessage();
+
+/** Quick site-section shortcuts (shown as Explore, not as Pip’s identity). */
+export const JUMP_CHIPS = PAGE_SECTIONS.map((s) => ({
+  label: s.label,
+  sectionId: s.id,
+}));
+
+/** Secondary ask chips. */
+export const TOPIC_CHIPS = [
+  { label: 'Solar backup', ask: 'What is hybrid solar backup?' },
+  { label: 'Automation', ask: 'What is home automation?' },
+  { label: 'Home theatre', ask: 'What is home theatre?' },
+  { label: 'CCTV', ask: 'Tell me about CCTV' },
+];
+
+export const quickPrompts = [
+  'What is hybrid solar backup?',
+  'What is home automation?',
+  'Do you do Dolby Atmos?',
+  'How do I get a quote?',
+];
+
+export function buildJumpMenu() {
+  return buildJumpMenuReply();
+}
+
+const STOPWORDS = new Set([
+  'a', 'an', 'the', 'do', 'does', 'did', 'you', 'your', 'yours', 'for', 'to', 'of',
+  'and', 'or', 'is', 'are', 'was', 'were', 'be', 'we', 'me', 'my', 'i', 'with', 'on',
+  'in', 'at', 'can', 'could', 'would', 'should', 'what', 'which', 'who', 'how', 'any',
+  'about', 'from', 'into', 'that', 'this', 'it', 'if', 'also', 'just', 'please',
+  'want', 'need', 'get', 'got', 'have', 'has', 'had', 'will', 'there', 'their',
+  'them', 'they', 'our', 'us', 'am', 'im', 'i\'m', 'kinda', 'like', 'really',
+]);
+
+const SYNONYMS = [
+  [/load[\s-]?shedding/g, 'power outage'],
+  [/loadshedding/g, 'power outage'],
+  [/black ?outs?/g, 'power outage'],
+  [/power cuts?/g, 'power outage'],
+  [/wi[\s-]?fi/g, 'wifi'],
+  [/internet connection/g, 'internet'],
+  [/cameras?/g, 'cctv camera'],
+  [/surveillance/g, 'cctv'],
+  [/security cameras?/g, 'cctv'],
+  [/home theater/g, 'home theatre'],
+  [/movie room/g, 'home theatre'],
+  [/cinema room/g, 'home theatre'],
+  [/smart home/g, 'home automation'],
+  [/quotation/g, 'quote'],
+  [/how much (does|do|will|would) (it|this|that|solar|cctv|a system)/g, 'quote price'],
+  [/pricey|expensive|affordable|cheap/g, 'price'],
+  [/biz|businesses/g, 'business'],
+  [/offices?/g, 'office commercial'],
+  [/warehouses?/g, 'warehouse commercial'],
+  [/shops?/g, 'shop commercial'],
+  [/factories|factory/g, 'industrial commercial'],
+  [/homestead/g, 'farm rural'],
+  [/smallholding/g, 'farm rural'],
+  [/plot\b/g, 'farm rural'],
+  [/intergrate|integate|integrting/g, 'integrate'],
+  [/intergration|integartion/g, 'integration'],
+];
+
+const AUDIENCE = new Set([
+  'commercial', 'business', 'farm', 'farms', 'rural', 'home', 'homes',
+  'residential', 'office', 'warehouse', 'industrial', 'estate', 'estates',
+]);
+
+const SERVICEISH = new Set([
+  'solar', 'renewable', 'hybrid', 'power', 'cctv', 'camera', 'cameras',
+  'wifi', 'internet', 'mikrotik', 'theatre', 'theater', 'automation',
+  'security', 'backup', 'battery', 'inverter', 'av', 'lighting',
+]);
+
+function normalize(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^\w\s#+.-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function expandSynonyms(text) {
+  let out = normalize(text);
+  for (const [pattern, replacement] of SYNONYMS) {
+    out = out.replace(pattern, replacement);
+  }
+  return out.replace(/\s+/g, ' ').trim();
+}
+
+function tokenize(text) {
+  return expandSynonyms(text)
+    .split(' ')
+    .filter((t) => t.length > 1 && !STOPWORDS.has(t));
+}
+
+function isFollowUpFragment(message) {
+  const m = normalize(message);
+  if (!m) return false;
+  if (m.split(' ').length <= 5) {
+    if (
+      /^(and |for |what about |how about |also |yes |no |ok |okay )/.test(m) ||
+      /^(for )?(commercial|business|farms?|rural|homes?|residential)\??$/.test(m) ||
+      /^(tell me more|more info|more details|and pricing|the price|how much)\??$/.test(m)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function wantsServiceList(message) {
+  const m = expandSynonyms(message);
+  if (!m) return false;
+
+  // Integration / “do they work together?” is NOT a catalogue request
+  if (
+    /\b(integrat|together|combin|one system|as one|cross.?system|joined.?up|seamless)\w*\b/.test(m)
+  ) {
+    return false;
+  }
+
+  if (
+    /^(what )?services( do you offer)?$/.test(m) ||
+    /^(your |all |show |list )?services$/.test(m) ||
+    m === 'what can you do' ||
+    m === 'what do you do'
+  ) {
+    return true;
+  }
+
+  const hasServiceWord = /\b(service|services|offering|offerings)\b/.test(m);
+  const hasOfferWord = /\b(offer|offers|offering)\b/.test(m);
+  const hasAskWord = /\b(what|which|list|show|tell|available|provide)\b/.test(m);
+  const hasSpecific =
+    /\b(solar|cctv|wifi|automation|theatre|theater|commercial|rural|mikrotik|hybrid)\b/.test(m);
+
+  if (hasServiceWord && (hasAskWord || hasOfferWord) && !hasSpecific) return true;
+  if (hasOfferWord && hasAskWord && !hasSpecific) return true;
+  if (/\bwhat (can|do) you (do|offer)\b/.test(m) && !hasSpecific) return true;
+
+  return false;
+}
+
+function queryHasAudience(tokens) {
+  return tokens.some((t) => AUDIENCE.has(t));
+}
+
+function scoreEntry(queryNorm, queryTokens, entry) {
+  let match = 0;
+  const tagSet = new Set((entry.tags || []).map((t) => normalize(t)));
+  const hay = normalize(
+    [entry.title, entry.answer, entry.detail, ...(entry.tags || []), ...(entry.keys || [])].join(' ')
+  );
+
+  // Audience-gated entries (e.g. commercial-solar) need an audience word in the query
+  if (entry.audienceRequired && !queryHasAudience(queryTokens)) {
+    // Still allow exact multi-word keys that already include audience
+    let keyOnly = 0;
+    for (const key of entry.keys || []) {
+      const k = normalize(key);
+      if (k && queryNorm.includes(k) && AUDIENCE.has(k.split(' ')[0])) {
+        keyOnly += 18;
+      }
+    }
+    if (keyOnly === 0) return 0;
+    match += keyOnly;
+  }
+
+  for (const key of entry.keys || []) {
+    const k = normalize(key);
+    if (!k) continue;
+    if (queryNorm.includes(k)) {
+      match += k.includes(' ') ? 20 : Math.max(6, Math.min(k.length + 2, 14));
+    }
+  }
+
+  for (const token of queryTokens) {
+    if (tagSet.has(token)) {
+      match += 8;
+      continue;
+    }
+    let tagHit = false;
+    for (const tag of tagSet) {
+      if (tag.length >= 4 && (tag.includes(token) || (token.length >= 4 && token.includes(tag)))) {
+        match += 5;
+        tagHit = true;
+        break;
+      }
+    }
+    if (tagHit) continue;
+    if (hay.includes(token)) match += 2;
+  }
+
+  const qAudience = queryTokens.filter((t) => AUDIENCE.has(t));
+  const qService = queryTokens.filter((t) => SERVICEISH.has(t));
+  if (qAudience.length && qService.length) {
+    const entryHasAudience = qAudience.some((t) => tagSet.has(t) || hay.includes(t));
+    const entryHasService = qService.some((t) => tagSet.has(t) || hay.includes(t));
+    if (entryHasAudience && entryHasService) match += 18;
+  }
+
+  // Prefer shorter, more specific entries when scores are close — applied as priority later
+  if (match <= 0) return 0;
+  return match + (entry.priority || 0);
+}
+
+function findBestKnowledge(rawMessage) {
+  const queryNorm = expandSynonyms(rawMessage);
+  const queryTokens = tokenize(rawMessage);
+
+  // Phrase-only questions ("who are you?") may have zero tokens after stopword removal
+  if (!queryTokens.length && !queryNorm) return null;
+
+  let best = null;
+  let bestScore = 0;
+  const ranked = [];
+
+  for (const entry of PIP_KNOWLEDGE) {
+    const score = scoreEntry(queryNorm, queryTokens, entry);
+    if (score > 0) ranked.push({ entry, score });
+    if (score > bestScore) {
+      bestScore = score;
+      best = entry;
+    }
+  }
+
+  ranked.sort((a, b) => b.score - a.score);
+
+  const minScore = queryTokens.length === 0 ? 12 : queryTokens.length <= 2 ? 8 : 10;
+  if (!best || bestScore < minScore) return null;
+
+  return { entry: best, score: bestScore, ranked: ranked.slice(0, 3) };
+}
+
+function topicSeed(topic) {
+  const t = normalize(topic);
+  if (!t) return '';
+  if (/solar|renewable|energy|outage|backup|battery/.test(t)) return 'solar';
+  if (/cctv|security|camera/.test(t)) return 'cctv';
+  if (/wifi|internet|mikrotik|rural connectivity|connectivity/.test(t)) return 'internet';
+  if (/theatre|theater|cinema|av|audio/.test(t)) return 'home theatre';
+  if (/automation|smart/.test(t)) return 'home automation';
+  if (/hybrid power|agriculture/.test(t)) return 'hybrid power';
+  return t;
+}
+
+function emotionFor(entry, score) {
+  if (!entry) return 'confused';
+  if (entry.id === 'about-pip' || entry.id === 'about-sis') return 'wave';
+  if (entry.id.includes('quote') || entry.id.includes('contact')) return 'happy';
+  if (score >= 28) return 'happy';
+  if (entry.id.startsWith('faq-')) return 'happy';
+  return 'idle';
+}
+
+function sectionIdFromEntry(entry) {
+  if (!entry?.section) return null;
+  const m = String(entry.section).match(/#([\w-]+)/);
+  return m ? m[1] : null;
+}
+
+function composeReply(entry, score, { isCapability } = {}) {
+  let text = entry.answer;
+  if (isCapability && (entry.id.startsWith('service-') || entry.id.startsWith('domain-')) && !/^yes\b/i.test(text)) {
+    text = `Yes. ${text}`;
+  }
+
+  const whatsappText =
+    entry.whatsappText ||
+    `Hi Jean, I was chatting with Pip about “${entry.title}”.`;
+
+  const sectionId = sectionIdFromEntry(entry);
+  const sectionMeta = PAGE_SECTIONS.find((s) => s.id === sectionId);
+
+  const followUps = [...(entry.followUps || [])].filter(
+    (f) => !/show jump menu|jump menu/i.test(f)
+  );
+
+  return {
+    text,
+    bullets: entry.bullets?.length ? entry.bullets : null,
+    path: entry.path || null,
+    sectionId,
+    sectionLabel: sectionMeta?.label || null,
+    services: null,
+    showWhatsApp: true,
+    emotion: emotionFor(entry, score),
+    topic: entry.topic || entry.title,
+    followUps: followUps.slice(0, 4),
+    whatsappHref: whatsappUrl(whatsappText),
+  };
+}
+
+/**
+ * @param {string} rawMessage
+ * @param {{ lastTopic?: string | null }} [context]
+ */
+export function getAssistantReply(rawMessage, context = {}) {
+  let working = String(rawMessage || '').trim();
+  const lastTopic = context.lastTopic || null;
+
+  if (!working) {
+    return {
+      text: 'Ask me anything about SIS — services, coverage, process, or quotes.',
+      emotion: 'listen',
+      followUps: quickPrompts,
+      showWhatsApp: true,
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+    };
+  }
+
+  // Navigation intents (still supported; not how Pip introduces himself)
+  const jump = matchJumpIntent(working);
+  if (jump) {
+    return jumpReply(jump);
+  }
+
+  // Resolve short follow-ups using last topic (“for commercial?” after solar)
+  if (lastTopic && isFollowUpFragment(working)) {
+    const seed = topicSeed(lastTopic);
+    working = seed ? `${seed} ${working}` : `${lastTopic} ${working}`;
+  }
+
+  const message = expandSynonyms(working);
+
+  if (/^(hi|hello|hey|howdy|good (morning|afternoon|evening)|hola)\b/.test(message)) {
+    return {
+      text: 'Hi! I’m Pip — ask me about services, coverage, outages, or getting a quote.',
+      emotion: 'wave',
+      followUps: quickPrompts,
+      showWhatsApp: true,
+      topic: 'greeting',
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+    };
+  }
+
+  if (/^(thanks|thank you|thx|cheers|appreciate)\b/.test(message)) {
+    return {
+      text: 'Glad to help. Ask another question anytime — or WhatsApp Jean when you’re ready for a quote.',
+      showWhatsApp: true,
+      emotion: 'happy',
+      topic: lastTopic || 'thanks',
+      followUps: ['How do I get a quote?', 'What services do you offer?', 'Do you cover my area?'],
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+    };
+  }
+
+  if (/^(bye|goodbye|see you|later)\b/.test(message)) {
+    return {
+      text: 'Catch you later. I’m here whenever you need a hand.',
+      emotion: 'wave',
+      topic: 'bye',
+      showWhatsApp: true,
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+      followUps: [],
+    };
+  }
+
+  if (wantsServiceList(message)) {
+    return buildServicesReply();
+  }
+
+  const hit = findBestKnowledge(working);
+  if (hit) {
+    const isCapability = /\b(do you|can you|did you|offer|install|provide|help with|cover|work with)\b/.test(
+      message
+    );
+    return composeReply(hit.entry, hit.score, { isCapability });
+  }
+
+  return {
+    text: 'I’m not sure from what’s on this site. Try asking about services, coverage, process, or quotes — or WhatsApp Jean for anything specific.',
+    showWhatsApp: true,
+    emotion: 'confused',
+    topic: lastTopic || 'unknown',
+    followUps: [
+      'What services do you offer?',
+      'Do you cover my area?',
+      'How do I get a quote?',
+    ],
+    whatsappHref: WHATSAPP_ASSISTANT_URL,
+  };
+}

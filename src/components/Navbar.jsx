@@ -1,111 +1,170 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const LOGO_URL = "/assets/logo.png";
 
 const navLinks = [
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'About', hash: 'about' },
+  { label: 'Services', hash: 'services' },
+  { label: 'Packages', hash: 'packages' },
+  { label: 'Agriculture', hash: 'agriculture' },
+  { label: 'Process', hash: 'process' },
+  { label: 'Coverage', hash: 'coverage' },
+  { label: 'FAQ', hash: 'faq' },
+  { label: 'Contact', hash: 'contact' },
 ];
 
-export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
+export function scrollToSectionId(id) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  const navOffset = 88;
+  const top = el.getBoundingClientRect().top + window.scrollY - navOffset;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  return true;
+}
+
+export default function Navbar({ solid = false }) {
+  const [isScrolled, setIsScrolled] = useState(solid);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const onHome = location.pathname === '/';
 
   useEffect(() => {
+    if (solid) {
+      setIsScrolled(true);
+      return undefined;
+    }
     const handleScroll = () => setIsScrolled(window.scrollY > 40);
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [solid]);
 
-  const scrollToSection = (href) => {
+  useEffect(() => {
     setMobileMenuOpen(false);
-    const element = document.querySelector(href);
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
+  }, [location.pathname, location.hash]);
+
+  const goToSection = (hash) => {
+    setMobileMenuOpen(false);
+
+    const runScroll = () => {
+      if (!scrollToSectionId(hash)) return;
+      if (onHome && location.hash.replace('#', '') !== hash) {
+        navigate({ pathname: '/', hash }, { replace: true });
+      }
+    };
+
+    if (onHome) {
+      // Wait for the menu to close so scroll position isn't fighting the overlay
+      window.setTimeout(runScroll, 50);
+      return;
+    }
+
+    navigate({ pathname: '/', hash });
   };
 
+  const goHomeTop = (e) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    if (onHome) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigate({ pathname: '/', hash: '' }, { replace: true });
+      return;
+    }
+    navigate('/');
+  };
+
+  const linkClass = isScrolled || mobileMenuOpen
+    ? 'text-slate-700 hover:text-teal-600'
+    : 'text-white/85 hover:text-white';
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      isScrolled ? 'bg-white/95 backdrop-blur-md shadow-sm h-20' : 'bg-transparent h-28'
-    }`}>
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled || mobileMenuOpen
+          ? 'bg-white/95 backdrop-blur-md shadow-sm h-20'
+          : 'bg-transparent h-28'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full">
         <div className="flex items-center h-full relative">
-
-          {/* Logo: centered when not scrolled, left when scrolled */}
-          <motion.a
-            href="#"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            animate={isScrolled ? { x: 0, left: 0 } : {}}
+          <Link
+            to="/"
+            onClick={goHomeTop}
             className={`absolute transition-all duration-500 ${
-              isScrolled
-                ? 'left-0 relative'
-                : 'left-1/2 -translate-x-1/2'
+              isScrolled || mobileMenuOpen ? 'left-0 relative' : 'left-1/2 -translate-x-1/2'
             }`}
           >
             <img
               src={LOGO_URL}
-              alt="SIS Logo"
-              className={`object-contain transition-all duration-500 ${
-                isScrolled ? 'h-14' : 'h-24'
+              alt="SIS — Systems Integration Specialists"
+              className={`object-contain transition-all duration-500 drop-shadow-md ${
+                isScrolled || mobileMenuOpen ? 'h-14' : 'h-24'
               }`}
             />
-          </motion.a>
+          </Link>
 
-          {/* Desktop Nav - always right */}
-          <div className="hidden md:flex items-center gap-10 ml-auto">
+          <div className="hidden lg:flex items-center gap-6 ml-auto">
             {navLinks.map((link) => (
               <button
                 key={link.label}
-                onClick={() => scrollToSection(link.href)}
-                className={`text-sm font-medium tracking-wide transition-colors duration-300 ${
-                  isScrolled ? 'text-slate-700 hover:text-teal-600' : 'text-slate-800 hover:text-teal-600'
-                }`}
+                type="button"
+                onClick={() => goToSection(link.hash)}
+                className={`text-sm font-medium tracking-wide transition-colors duration-300 ${linkClass}`}
               >
                 {link.label}
               </button>
             ))}
             <button
-              onClick={() => scrollToSection('#contact')}
-              className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300"
+              type="button"
+              onClick={() => goToSection('contact')}
+              className="px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all duration-300"
             >
               Get Started
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-700 ml-auto"
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className={`lg:hidden p-2 ml-auto transition-colors ${
+              isScrolled || mobileMenuOpen ? 'text-slate-700' : 'text-white'
+            }`}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden absolute left-0 right-0 top-full bg-white border-t border-slate-100 shadow-xl"
           >
-            <div className="px-6 py-6 space-y-4">
+            <div className="px-6 py-4 space-y-1 max-h-[calc(100dvh-5rem)] overflow-y-auto">
               {navLinks.map((link) => (
                 <button
                   key={link.label}
-                  onClick={() => scrollToSection(link.href)}
-                  className="block w-full text-left text-slate-700 font-medium py-2"
+                  type="button"
+                  onClick={() => goToSection(link.hash)}
+                  className="block w-full text-left text-slate-700 font-medium py-3 px-2 rounded-lg hover:bg-slate-50"
                 >
                   {link.label}
                 </button>
               ))}
               <button
-                onClick={() => scrollToSection('#contact')}
-                className="w-full px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-full"
+                type="button"
+                onClick={() => goToSection('contact')}
+                className="w-full mt-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium rounded-full"
               >
                 Get Started
               </button>
