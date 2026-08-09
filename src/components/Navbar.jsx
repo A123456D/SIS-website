@@ -86,28 +86,26 @@ export default function Navbar({ solid = false }) {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled || mobileMenuOpen
           ? 'bg-white/95 backdrop-blur-md shadow-sm h-20'
-          : 'bg-transparent h-28'
+          : 'bg-transparent h-24'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full">
-        <div className="flex items-center h-full relative">
+        <div className="flex items-center justify-between h-full gap-6">
           <Link
             to="/"
             onClick={goHomeTop}
-            className={`absolute transition-all duration-500 ${
-              isScrolled || mobileMenuOpen ? 'left-0 relative' : 'left-1/2 -translate-x-1/2'
-            }`}
+            className="shrink-0"
           >
             <img
               src={LOGO_URL}
               alt="SIS — Systems Integration Specialists"
               className={`object-contain transition-all duration-500 drop-shadow-md ${
-                isScrolled || mobileMenuOpen ? 'h-14' : 'h-24'
+                isScrolled || mobileMenuOpen ? 'h-12' : 'h-14'
               }`}
             />
           </Link>
 
-          <div className="hidden lg:flex items-center gap-6 ml-auto">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-6 ml-auto">
             {navLinks.map((link) => (
               <button
                 key={link.label}
@@ -130,7 +128,7 @@ export default function Navbar({ solid = false }) {
           <button
             type="button"
             onClick={() => setMobileMenuOpen((open) => !open)}
-            className={`lg:hidden p-2 ml-auto transition-colors ${
+            className={`lg:hidden p-2 shrink-0 transition-colors ${
               isScrolled || mobileMenuOpen ? 'text-slate-700' : 'text-white'
             }`}
             aria-expanded={mobileMenuOpen}

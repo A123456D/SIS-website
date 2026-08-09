@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
+const LOGO_URL = '/assets/logo.png';
+
 export default function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -9,9 +11,9 @@ export default function HeroSection() {
         <img
           src="/assets/hero-bg.png"
           alt=""
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-slate-900/70 to-teal-950/65" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/65 to-teal-950/55" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 text-center pt-28 pb-24">
@@ -20,9 +22,11 @@ export default function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <p className="text-sm md:text-base font-semibold tracking-[0.28em] uppercase text-teal-300 mb-6">
-            SIS
-          </p>
+          <img
+            src={LOGO_URL}
+            alt="SIS — Systems Integration Specialists"
+            className="mx-auto mb-8 h-36 sm:h-44 md:h-52 lg:h-60 w-auto object-contain drop-shadow-2xl"
+          />
 
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-white leading-[1.05] tracking-tight mb-6">
             Technology that
