@@ -36,7 +36,10 @@ export default function HeroSection() {
           </h1>
 
           <p className="max-w-xl mx-auto text-lg text-white/75 leading-relaxed mb-10">
-            Solar backup through outages, smart automation, cinema-grade theatre, and CCTV that stays awake—designed as one environment for homes and commercial sites. For farms and rural properties, we add MikroTik networks that reach where town Wi‑Fi won’t.
+            South Africa–based systems integration for homes, commercial sites, and rural
+            properties—solar backup through outages, smart automation, cinema-grade theatre,
+            and CCTV that stays awake. For farms, we add MikroTik networks that reach where
+            town Wi‑Fi won’t.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

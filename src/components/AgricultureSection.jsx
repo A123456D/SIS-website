@@ -17,7 +17,7 @@ const capabilities = [
       'Grid, solar, and battery backup sized for farm loads—so pumps, cold rooms, gates, and essentials stay up when the grid doesn’t.',
     href: '/services/agriculture',
     cta: 'Hybrid power systems',
-    image: '/assets/hybrid-power.png',
+    image: '/assets/ag-hybrid-power.png',
   },
   {
     icon: Wifi,
@@ -26,7 +26,7 @@ const capabilities = [
       'Long-range links and mesh coverage between house, sheds, and yard—built on MikroTik where town Wi‑Fi won’t reach.',
     href: '/services/wifi',
     cta: 'Rural connectivity',
-    image: '/assets/rural-connectivity.png',
+    image: '/assets/ag-rural-connectivity.png',
   },
   {
     icon: Camera,
@@ -35,7 +35,7 @@ const capabilities = [
       'HD/4K CCTV with remote alerts—and UPS options so cameras keep watching through power outages.',
     href: '/services/cctv',
     cta: 'CCTV & security',
-    image: '/assets/cctv-security.png',
+    image: '/assets/ag-cctv-security.png',
   },
 ];
 
@@ -60,9 +60,9 @@ export default function AgricultureSection() {
             Built for the farm, not the suburb
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed">
-            Distance, outages, and weather are the brief. We design hybrid power, MikroTik
-            connectivity, and monitoring that work across the homestead—not a city kit
-            stretched thin.
+            Distance, outages, and weather are the brief—especially on South African farms and
+            rural properties. We design hybrid power, MikroTik connectivity, and monitoring that
+            work across the homestead—not a city kit stretched thin.
           </p>
         </motion.div>
 

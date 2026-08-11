@@ -46,10 +46,10 @@ export default function CoverageSection() {
               From the driveway to the dirt road
             </h2>
             <p className="text-lg text-slate-600 leading-relaxed mb-6">
-              We work where a city-only installer often can’t—or won’t. Homes and estates,
-              commercial yards and facilities, farms and rural sites: places where power,
-              security, and internet have to survive outages, distance, and real South African
-              conditions.
+              We’re South Africa–based, and we work where a city-only installer often can’t—or
+              won’t. Homes and estates, commercial yards and facilities, farms and rural sites:
+              places where power, security, and internet have to survive outages, distance, and
+              real local conditions.
             </p>
             <p className="text-slate-600 leading-relaxed mb-8">
               Coverage still depends on where you are and what you’re building. Drop Jean your

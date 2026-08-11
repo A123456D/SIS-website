@@ -91,8 +91,9 @@ export default function AboutSection() {
           >
             <div className="space-y-6 text-lg text-slate-600 leading-relaxed">
               <p>
-                We combine renewable energy, intelligent automation, advanced security, 
-                rural connectivity, and immersive audio-visual design & home theatre into one seamless experience.
+                SIS is a South Africa–based systems integrator. We combine renewable energy,
+                intelligent automation, advanced security, rural connectivity, and immersive
+                audio-visual design & home theatre into one seamless experience.
               </p>
               <p className="text-xl font-medium text-slate-800">
                 We don't sell products.

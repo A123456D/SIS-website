@@ -94,9 +94,10 @@ export default function ContactSection() {
               </span>
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-slate-400">
-              Whether it’s a home, a commercial site, or a rural property—message Jean on WhatsApp
-              or send a quick enquiry. Include your town or farm name so we can confirm coverage.
-              Financing is available for qualifying installs.
+              SIS is South Africa–based. Whether it’s a home, a commercial site, or a rural
+              property—message Jean on WhatsApp or send a quick enquiry. Include your town or
+              farm name so we can confirm coverage. Financing is available for qualifying
+              installs.
             </p>
           </div>
 
@@ -112,7 +113,7 @@ export default function ContactSection() {
                 <img src={LOGO_URL} alt="SIS Logo" className="h-16 w-auto" />
                 <div>
                   <h3 className="text-xl font-semibold text-white">Jean Conradie</h3>
-                  <p className="text-slate-400">Systems Integration Specialists</p>
+                  <p className="text-slate-400">Systems Integration Specialists · South Africa</p>
                 </div>
               </div>
 

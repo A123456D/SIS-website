@@ -12,7 +12,7 @@ export default function Footer() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <img src={LOGO_URL} alt="SIS Logo" className="h-10 w-auto opacity-80" />
-            <span className="text-slate-400 text-sm">Systems Integration Specialists</span>
+            <span className="text-slate-400 text-sm">Systems Integration Specialists · South Africa</span>
           </div>
 
           {/* Copyright */}

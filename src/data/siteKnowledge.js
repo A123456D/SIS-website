@@ -11,6 +11,7 @@ export const CONTACT = {
   whatsappBase: 'https://wa.me/27646517446',
   name: 'Jean Conradie',
   company: 'SIS (Systems Integration Specialists)',
+  country: 'South Africa',
 };
 
 export const siteFaqs = [
@@ -447,9 +448,9 @@ export function buildPipKnowledge() {
     topic: 'about',
     title: 'About SIS',
     answer:
-      'SIS—Systems Integration Specialists—builds intelligent environments, not shopping lists of gadgets. Power, automation, security, rural connectivity, and home theatre planned as one story for homes, commercial sites, and rural properties.',
-    tags: ['sis', 'company', 'about', 'philosophy'],
-    keys: ['about sis', 'what is sis', 'who is sis', 'company', 'tell me about sis'],
+      'SIS—Systems Integration Specialists—is a South Africa–based company that builds intelligent environments, not shopping lists of gadgets. Power, automation, security, rural connectivity, and home theatre planned as one story for homes, commercial sites, and rural properties.',
+    tags: ['sis', 'company', 'about', 'philosophy', 'south africa', 'south african'],
+    keys: ['about sis', 'what is sis', 'who is sis', 'company', 'tell me about sis', 'south africa', 'south african', 'based in'],
     section: '/#about',
     followUps: ['What services do you offer?', 'How does the process work?', 'How do I get a quote?'],
     priority: 9,
