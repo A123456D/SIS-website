@@ -42,32 +42,34 @@ const PIP_BLINK = Array.from(
 
 /** Calm blink: open → closed → open */
 const BLINK_SEQUENCE = [0, 1, 2, 4, 6, 7, 6, 4, 2, 1, 0];
-const BLINK_FRAME_MS = [55, 45, 40, 40, 45, 90, 45, 40, 40, 45, 55];
+const BLINK_FRAME_MS = [70, 55, 50, 50, 55, 110, 55, 50, 50, 55, 70];
 
 const SOUND_KEY = 'sis-pip-sound';
 const SEEN_KEY = 'sis-pip-seen';
 
-let blinkPreloaded = false;
-function preloadBlink() {
-  if (blinkPreloaded || typeof window === 'undefined') return;
-  blinkPreloaded = true;
-  PIP_BLINK.forEach((src) => {
-    const img = new Image();
-    img.src = src;
-  });
-}
-
 function PipFace({ emotion = 'idle', className = 'w-8 h-8', alt = '', animateBlink = false }) {
   const [blinkFrame, setBlinkFrame] = useState(0);
-  const canBlink = animateBlink;
+  const [blinkReady, setBlinkReady] = useState(false);
+  const loaded = useRef(new Set());
+
+  const markFrameLoaded = (index) => {
+    if (loaded.current.has(index)) return;
+    loaded.current.add(index);
+    if (loaded.current.size >= PIP_BLINK.length) {
+      setBlinkReady(true);
+    }
+  };
 
   useEffect(() => {
-    if (!canBlink) {
+    if (!animateBlink) {
       setBlinkFrame(0);
-      return undefined;
+      setBlinkReady(false);
+      loaded.current = new Set();
     }
+  }, [animateBlink]);
 
-    preloadBlink();
+  useEffect(() => {
+    if (!animateBlink || !blinkReady) return undefined;
 
     const reduceMotion =
       typeof window !== 'undefined' &&
@@ -77,8 +79,8 @@ function PipFace({ emotion = 'idle', className = 'w-8 h-8', alt = '', animateBli
     let cancelled = false;
     let timeoutId = 0;
 
-    const scheduleNext = () => {
-      timeoutId = window.setTimeout(runBlink, 3200 + Math.random() * 4200);
+    const scheduleNext = (delay) => {
+      timeoutId = window.setTimeout(runBlink, delay);
     };
 
     const runBlink = () => {
@@ -86,34 +88,67 @@ function PipFace({ emotion = 'idle', className = 'w-8 h-8', alt = '', animateBli
       const tick = () => {
         if (cancelled) return;
         setBlinkFrame(BLINK_SEQUENCE[step]);
-        const wait = BLINK_FRAME_MS[step] ?? 50;
+        const wait = BLINK_FRAME_MS[step] ?? 55;
         step += 1;
         if (step < BLINK_SEQUENCE.length) {
           timeoutId = window.setTimeout(tick, wait);
         } else {
           setBlinkFrame(0);
-          scheduleNext();
+          scheduleNext(2800 + Math.random() * 3800);
         }
       };
       tick();
     };
 
-    scheduleNext();
+    // First blink soon so it's obvious on mobile, then a calm cadence.
+    scheduleNext(900 + Math.random() * 1400);
+
     return () => {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [canBlink]);
+  }, [animateBlink, blinkReady]);
 
-  const src = canBlink ? PIP_BLINK[blinkFrame] || PIP_BLINK[0] : PIP[emotion] || PIP.idle;
+  if (!animateBlink) {
+    return (
+      <img
+        src={PIP[emotion] || PIP.idle}
+        alt={alt}
+        className={`${className} object-contain object-bottom select-none pointer-events-none`}
+        draggable={false}
+      />
+    );
+  }
 
+  // Stack every frame and flip opacity. Swapping one <img> src fails often on
+  // mobile (decode lag / memory eviction), so the blink looks static there.
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={`${className} object-contain object-bottom select-none pointer-events-none`}
-      draggable={false}
-    />
+    <span
+      className={`relative inline-block ${className}`}
+      aria-label={alt || undefined}
+      role={alt ? 'img' : undefined}
+    >
+      {PIP_BLINK.map((src, i) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          ref={(node) => {
+            if (node?.complete && node.naturalWidth > 0) {
+              queueMicrotask(() => markFrameLoaded(i));
+            }
+          }}
+          onLoad={() => markFrameLoaded(i)}
+          className={`absolute inset-0 w-full h-full object-contain object-bottom select-none pointer-events-none ${
+            i === blinkFrame ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ zIndex: i === blinkFrame ? 1 : 0 }}
+          draggable={false}
+          decoding="sync"
+          loading="eager"
+        />
+      ))}
+    </span>
   );
 }
 
