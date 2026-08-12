@@ -147,6 +147,22 @@ export function matchJumpIntent(rawMessage) {
     return null;
   }
 
+  // “Where is Jean / Jean Avenue / address?” → contact, not Coverage
+  if (
+    /\b(jean|avenue|street|address|phone number|email)\b/.test(m) &&
+    /\b(where|find|locate|show)\b/.test(m)
+  ) {
+    const contact = PAGE_SECTIONS.find((s) => s.id === 'contact');
+    if (contact) {
+      return {
+        kind: 'section',
+        sectionId: contact.id,
+        label: contact.label,
+        blurb: contact.blurb,
+      };
+    }
+  }
+
   for (const section of PAGE_SECTIONS) {
     const tokens = m.split(/\s+/);
     const exact =

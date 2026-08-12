@@ -44,6 +44,10 @@ const cases = [
   ['how much does solar cost', (r) => /quote|price|whatsapp/i.test(r.text)],
   ['what services do you offer?', (r) => r.services?.length > 0 || /service|offer/i.test(r.text)],
   ['who are you?', (r) => /pip/i.test(r.text) && /assistant/i.test(r.text)],
+  ['Are you hiring?', (r) => /clearance level/i.test(r.text)],
+  ['How much ram are you eating?', (r) => /ram/i.test(r.text) && !/fixed prices/i.test(r.text)],
+  ['How many questions can I ask', (r) => /no limit|as many as you like/i.test(r.text)],
+  ['Where is Jean Avenue?', (r) => r.sectionId === 'contact' || /jean|contact|whatsapp/i.test(r.text)],
   ['xyzzyfoobar', (r) => r.emotion === 'confused' || /not sure/i.test(r.text)],
 ];
 

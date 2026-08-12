@@ -195,6 +195,93 @@ function wantsServiceList(message) {
   return false;
 }
 
+/** Hiring / careers — Pip stays out of HR. */
+function isHiringQuestion(message) {
+  const m = normalize(message);
+  return (
+    /\b(hir(e|ing|ed)|hiring|job|jobs|vacanc(y|ies)|career|careers|recruit|recruiting|employment|employ)\b/.test(
+      m
+    ) ||
+    /\b(work|working) (for|at|with) (you|sis|the company)\b/.test(m) ||
+    /\bare you (looking for|taking on) (staff|people|employees|technicians)\b/.test(m)
+  );
+}
+
+/** Meta: how many questions / is there a limit. */
+function isQuestionLimitQuery(message) {
+  const m = normalize(message);
+  if (
+    /\b(how many|how much|limit|unlimited|max|maximum|cap)\b/.test(m) &&
+    /\b(questions?|asks?|queries|messages|chats?)\b/.test(m)
+  ) {
+    return true;
+  }
+  if (/\b(can i (keep|just) ask|am i limited|is there a limit)\b/.test(m)) return true;
+  if (/\b(question limit|ask forever|ask as many)\b/.test(m)) return true;
+  return false;
+}
+
+/** Silly “are you a computer” / RAM / CPU jokes aimed at Pip. */
+function isPipHardwareJoke(message) {
+  const m = normalize(message);
+  if (
+    /\b(ram|memory|cpu|gpu|vram|bandwidth|megabytes?|gigabytes?|fps|ping|latency)\b/.test(m) &&
+    /\b(you|your|pip|eating|eat|using|use|running|run|have|got|need)\b/.test(m)
+  ) {
+    return true;
+  }
+  if (/\b(how much (ram|memory)|are you (a )?(robot|server|computer|pc|laptop))\b/.test(m)) {
+    return true;
+  }
+  if (/\b(what (are|is) you (running|powered)|powered by|what chip)\b/.test(m)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * High-priority meta / banter replies — must run before knowledge scoring,
+ * which greedily matches phrases like “how much” → pricing and “how many” → battery.
+ */
+function matchMetaReply(rawMessage) {
+  const message = expandSynonyms(rawMessage);
+
+  if (isHiringQuestion(message)) {
+    return {
+      text: 'That’s above my clearance level.',
+      emotion: 'confused',
+      topic: 'hiring',
+      showWhatsApp: true,
+      followUps: ['What services do you offer?', 'How do I get a quote?', 'Do you cover my area?'],
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+    };
+  }
+
+  if (isQuestionLimitQuery(message)) {
+    return {
+      text: 'As many as you like — there’s no limit. Fire away about solar, CCTV, coverage, quotes, or anything else on this site.',
+      emotion: 'happy',
+      topic: 'pip-limits',
+      showWhatsApp: true,
+      followUps: ['What services do you offer?', 'What is hybrid solar backup?', 'How do I get a quote?'],
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+    };
+  }
+
+  if (isPipHardwareJoke(message)) {
+    return {
+      text: 'Zero. I don’t eat RAM — I run on good questions and Jean’s WhatsApp. Ask me something about SIS and I’ll earn my keep.',
+      emotion: 'happy',
+      topic: 'pip-banter',
+      showWhatsApp: true,
+      followUps: ['Who are you?', 'What services do you offer?', 'How do I get a quote?'],
+      whatsappHref: WHATSAPP_ASSISTANT_URL,
+    };
+  }
+
+  return null;
+}
+
 function queryHasAudience(tokens) {
   return tokens.some((t) => AUDIENCE.has(t));
 }
@@ -228,14 +315,16 @@ function scoreEntry(queryNorm, queryTokens, entry) {
     }
   }
 
+  // Prefer multi-word key hits; avoid scoring short tokens that only appear inside longer keys in hay
   for (const token of queryTokens) {
+    if (token.length < 4) continue;
     if (tagSet.has(token)) {
       match += 8;
       continue;
     }
     let tagHit = false;
     for (const tag of tagSet) {
-      if (tag.length >= 4 && (tag.includes(token) || (token.length >= 4 && token.includes(tag)))) {
+      if (tag.length >= 4 && (tag.includes(token) || token.includes(tag))) {
         match += 5;
         tagHit = true;
         break;
@@ -413,6 +502,9 @@ export function getAssistantReply(rawMessage, context = {}) {
   if (wantsServiceList(message)) {
     return buildServicesReply();
   }
+
+  const meta = matchMetaReply(working);
+  if (meta) return meta;
 
   const hit = findBestKnowledge(working);
   if (hit) {
