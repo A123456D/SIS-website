@@ -42,6 +42,8 @@ const PIP_BLINK = Array.from(
 
 /** Frame indices for one blink cycle (eyes close, then reopen). */
 const BLINK_SEQUENCE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 6, 4, 2, 0];
+/** ms per frame — slightly slower on the closed hold for a natural blink */
+const BLINK_FRAME_MS = [55, 50, 45, 40, 40, 40, 45, 70, 45, 45, 50, 55, 55];
 const BLINKABLE = new Set(['idle', 'wave', 'happy', 'listen']);
 
 const SOUND_KEY = 'sis-pip-sound';
@@ -83,7 +85,7 @@ function PipFace({
     let timeoutId = 0;
 
     const scheduleNext = () => {
-      const delay = 2200 + Math.random() * 3800;
+      const delay = 2800 + Math.random() * 4200;
       timeoutId = window.setTimeout(runBlink, delay);
     };
 
@@ -92,9 +94,10 @@ function PipFace({
       const tick = () => {
         if (cancelled) return;
         setBlinkFrame(BLINK_SEQUENCE[step]);
+        const wait = BLINK_FRAME_MS[step] ?? 50;
         step += 1;
         if (step < BLINK_SEQUENCE.length) {
-          timeoutId = window.setTimeout(tick, 38);
+          timeoutId = window.setTimeout(tick, wait);
         } else {
           setBlinkFrame(0);
           scheduleNext();
@@ -392,7 +395,12 @@ export default function ChatAssistant() {
         : [];
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-[60] flex flex-col items-end gap-3 pointer-events-none">
+    <div
+      className="fixed z-[60] flex flex-col items-end gap-3 pointer-events-none right-4 sm:right-5"
+      style={{
+        bottom: 'max(1.75rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))',
+      }}
+    >
       <AnimatePresence>
         {open && (
           <motion.div
@@ -648,41 +656,34 @@ export default function ChatAssistant() {
             play('hover');
           }
         }}
-        className="pointer-events-auto relative group bg-transparent border-0 p-0"
+        className="pointer-events-auto relative group bg-transparent border-0 p-0 overflow-visible"
         aria-label={open ? 'Close Pip' : 'Open Pip, SIS AI assistant'}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.96 }}
+        whileHover={open ? undefined : { scale: 1.03 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 28 }}
       >
         {!open && (
-          <motion.span
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -top-9 right-1 whitespace-nowrap rounded-full bg-slate-900 text-white text-xs font-medium px-3 py-1 shadow-lg"
-          >
+          <span className="absolute -top-9 right-1 whitespace-nowrap rounded-full bg-slate-900 text-white text-xs font-medium px-3 py-1 shadow-lg">
             Ask Pip
-          </motion.span>
+          </span>
         )}
         {!open && !hasSeen && (
-          <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-teal-400 border-2 border-white animate-pulse" />
+          <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-teal-400 border-2 border-white" />
         )}
-        <motion.div
-          animate={open ? { y: 0 } : { y: [0, -7, 0] }}
-          transition={
-            open
-              ? { duration: 0.2 }
-              : { duration: 2.6, repeat: Infinity, ease: 'easeInOut' }
-          }
-          className="relative w-[5.5rem] h-[5.5rem] sm:w-[6.25rem] sm:h-[6.25rem] flex items-center justify-center"
-        >
-          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-10 h-2.5 rounded-full bg-slate-900/20 blur-[3px]" />
+        <div className="relative w-[6.5rem] h-[7.25rem] sm:w-[7rem] sm:h-[7.75rem] flex items-end justify-center overflow-visible">
           {open ? (
-            <span className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center">
+            <span className="mb-2 w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center">
               <X className="w-6 h-6" />
             </span>
           ) : (
-            <PipFace emotion={emotion} animateBlink className="w-full h-full" alt="Pip" />
+            <PipFace
+              emotion={emotion}
+              animateBlink
+              className="w-full h-full drop-shadow-md"
+              alt="Pip"
+            />
           )}
-        </motion.div>
+        </div>
       </motion.button>
     </div>
   );

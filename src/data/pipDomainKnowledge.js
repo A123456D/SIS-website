@@ -102,8 +102,8 @@ export function buildDomainKnowledge() {
       title: 'Solar panels',
       answer:
         'Panels harvest daytime energy. On a hybrid system that energy runs loads and tops up batteries; surplus can reduce what you buy from the grid. Roof orientation, shading, and available area matter more than marketing wattage alone—we design around your roof/site reality.',
-      tags: ['panels', 'panel', 'photovoltaic', 'pv', 'roof', 'array'],
-      keys: ['solar panels', 'how panels work', 'pv panels', 'roof solar'],
+      tags: ['panels', 'panel', 'photovoltaic', 'pv', 'array', 'solar array'],
+      keys: ['solar panels', 'how panels work', 'pv panels', 'roof solar', 'panels on roof'],
       path: '/services/solar',
       followUps: ['What is hybrid solar backup?', 'How do I get a quote?'],
       priority: 11,

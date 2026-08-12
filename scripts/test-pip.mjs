@@ -46,9 +46,11 @@ const cases = [
   ['who are you?', (r) => /pip/i.test(r.text) && /assistant/i.test(r.text)],
   ['Are you hiring?', (r) => /clearance level/i.test(r.text)],
   ['How much ram are you eating?', (r) => /ram/i.test(r.text) && !/fixed prices/i.test(r.text)],
-  ['How many questions can I ask', (r) => /no limit|as many as you like/i.test(r.text)],
+  ['How many questions can I ask', (r) => /sis|solar|only cover|off-topic/i.test(r.text) && !/no limit/i.test(r.text)],
   ['Where is Jean Avenue?', (r) => r.sectionId === 'contact' || /jean|contact|whatsapp/i.test(r.text)],
-  ['xyzzyfoobar', (r) => r.emotion === 'confused' || /not sure/i.test(r.text)],
+  ['can you fix my roof', (r) => /don.?t know|built for sis|ask me about/i.test(r.text)],
+  ['can you paint my house', (r) => /don.?t know|built for sis|ask me about/i.test(r.text)],
+  ['xyzzyfoobar', (r) => r.emotion === 'confused' || /don.?t know|not sure|built for sis/i.test(r.text)],
 ];
 
 let failed = 0;

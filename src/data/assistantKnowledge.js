@@ -125,6 +125,79 @@ const SERVICEISH = new Set([
   'security', 'backup', 'battery', 'inverter', 'av', 'lighting',
 ]);
 
+/** Tokens that mean the question is about SIS / our offers (not random life stuff). */
+const SIS_SCOPE = new Set([
+  ...SERVICEISH,
+  'sis', 'pip', 'panel', 'panels', 'photovoltaic', 'pv', 'batteries', 'lithium',
+  'kwh', 'outage', 'outages', 'loadshedding', 'generator', 'genset', 'coc',
+  'compliance', 'atmos', 'dolby', 'cinema', 'acoustic', 'nvr', 'poe',
+  'mesh', 'wireless', 'network', 'connectivity', 'router',
+  'smart', 'hvac', 'climate', 'lighting', 'scene', 'scenes',
+  'quote', 'quotes', 'pricing', 'price', 'cost', 'finance', 'financing',
+  'contact', 'whatsapp', 'jean', 'email', 'phone', 'enquiry', 'inquiry',
+  'coverage', 'area', 'service', 'services', 'offering', 'offerings',
+  'package', 'packages', 'process', 'faq', 'integrate', 'integration',
+  'commercial', 'business', 'farm', 'farms', 'rural', 'residential',
+  'home', 'homes', 'estate', 'estates', 'office', 'warehouse', 'industrial',
+  'agriculture', 'install', 'installation', 'design', 'system', 'systems',
+]);
+
+/** Clear off-topic trades / topics SIS does not do. */
+const OFF_TOPIC =
+  /\b(fix(ing)?|repair(ing)?|leak(y|ing)?|plumb(ing|er)?|gutter|til(e|es|ing)|ceiling|paint(ing)?|garden|lawn|pool|fence|paving|car\b|vehicle|mechanic|dentist|doctor|lawyer|attorney|homework|recipe|cook(ing)?|crypto|bitcoin|stock market|boyfriend|girlfriend|weather forecast)\b/;
+
+const OFF_TOPIC_FALLBACK = {
+  text: 'I don’t know about that — I’m built for SIS. Ask me about our services (solar, hybrid power, automation, home theatre, CCTV, rural internet), coverage, process, or quotes.',
+  showWhatsApp: true,
+  emotion: 'confused',
+  topic: 'out-of-scope',
+  followUps: [
+    'What services do you offer?',
+    'Do you cover my area?',
+    'How do I get a quote?',
+  ],
+  whatsappHref: WHATSAPP_ASSISTANT_URL,
+};
+
+function queryTouchesSisScope(queryNorm, queryTokens) {
+  if (queryTokens.some((t) => SIS_SCOPE.has(t))) return true;
+  // Multi-word scope cues that may not survive tokenization cleanly
+  if (
+    /\b(home automation|home theatre|home theater|rural internet|power outage|load shedding|get a quote|whatsapp jean|dolby atmos)\b/.test(
+      queryNorm
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function hasStrongKeyHit(queryNorm, entry) {
+  for (const key of entry.keys || []) {
+    const k = normalize(key);
+    if (!k) continue;
+    if (k.includes(' ') && queryNorm.includes(k)) return true;
+    // Longer single-word keys (mikrotik, financing, etc.)
+    if (!k.includes(' ') && k.length >= 6 && queryNorm.includes(k)) return true;
+  }
+  return false;
+}
+
+function isOffTopicQuestion(message) {
+  const m = normalize(message);
+  if (!m) return false;
+  // Roof repair / fix roof without solar context
+  if (/\b(roof|roofs)\b/.test(m) && !/\b(solar|panel|panels|pv|inverter|battery)\b/.test(m)) {
+    if (/\b(fix|repair|leak|tile|gutter|replace|paint)\b/.test(m) || /\bcan you\b/.test(m)) {
+      return true;
+    }
+  }
+  if (OFF_TOPIC.test(m) && !queryTouchesSisScope(expandSynonyms(message), tokenize(message))) {
+    return true;
+  }
+  return false;
+}
+
 function normalize(text) {
   return String(text || '')
     .toLowerCase()
@@ -259,7 +332,7 @@ function matchMetaReply(rawMessage) {
 
   if (isQuestionLimitQuery(message)) {
     return {
-      text: 'As many as you like — there’s no limit. Fire away about solar, CCTV, coverage, quotes, or anything else on this site.',
+      text: 'Ask as many SIS questions as you like — solar, hybrid power, automation, home theatre, CCTV, rural internet, coverage, process, or quotes. I only cover what we do here, though; off-topic stuff I’ll pass on.',
       emotion: 'happy',
       topic: 'pip-limits',
       showWhatsApp: true,
@@ -350,20 +423,27 @@ function scoreEntry(queryNorm, queryTokens, entry) {
 function findBestKnowledge(rawMessage) {
   const queryNorm = expandSynonyms(rawMessage);
   const queryTokens = tokenize(rawMessage);
+  const inScope = queryTouchesSisScope(queryNorm, queryTokens);
 
   // Phrase-only questions ("who are you?") may have zero tokens after stopword removal
   if (!queryTokens.length && !queryNorm) return null;
 
   let best = null;
   let bestScore = 0;
+  let bestStrong = false;
   const ranked = [];
 
   for (const entry of PIP_KNOWLEDGE) {
     const score = scoreEntry(queryNorm, queryTokens, entry);
-    if (score > 0) ranked.push({ entry, score });
-    if (score > bestScore) {
+    if (score <= 0) continue;
+    const strong = hasStrongKeyHit(queryNorm, entry);
+    // Off-SIS wording must earn a real key phrase match — not a lonely tag like “roof”
+    if (!inScope && !strong) continue;
+    ranked.push({ entry, score, strong });
+    if (score > bestScore || (score === bestScore && strong && !bestStrong)) {
       bestScore = score;
       best = entry;
+      bestStrong = strong;
     }
   }
 
@@ -371,6 +451,7 @@ function findBestKnowledge(rawMessage) {
 
   const minScore = queryTokens.length === 0 ? 12 : queryTokens.length <= 2 ? 8 : 10;
   if (!best || bestScore < minScore) return null;
+  if (!inScope && !bestStrong) return null;
 
   return { entry: best, score: bestScore, ranked: ranked.slice(0, 3) };
 }
@@ -402,9 +483,17 @@ function sectionIdFromEntry(entry) {
   return m ? m[1] : null;
 }
 
-function composeReply(entry, score, { isCapability } = {}) {
+function composeReply(entry, score, { isCapability, queryNorm, queryTokens } = {}) {
   let text = entry.answer;
-  if (isCapability && (entry.id.startsWith('service-') || entry.id.startsWith('domain-')) && !/^yes\b/i.test(text)) {
+  const entryHay = normalize(
+    [entry.title, ...(entry.tags || []), ...(entry.keys || [])].join(' ')
+  );
+  const capabilityFits =
+    isCapability &&
+    (entry.id.startsWith('service-') || entry.id.startsWith('domain-')) &&
+    queryTokens?.some((t) => SERVICEISH.has(t) && (entryHay.includes(t) || SIS_SCOPE.has(t)));
+
+  if (capabilityFits && !/^yes\b/i.test(text)) {
     text = `Yes. ${text}`;
   }
 
@@ -503,6 +592,10 @@ export function getAssistantReply(rawMessage, context = {}) {
     return buildServicesReply();
   }
 
+  if (isOffTopicQuestion(working)) {
+    return { ...OFF_TOPIC_FALLBACK, whatsappHref: WHATSAPP_ASSISTANT_URL };
+  }
+
   const meta = matchMetaReply(working);
   if (meta) return meta;
 
@@ -511,19 +604,16 @@ export function getAssistantReply(rawMessage, context = {}) {
     const isCapability = /\b(do you|can you|did you|offer|install|provide|help with|cover|work with)\b/.test(
       message
     );
-    return composeReply(hit.entry, hit.score, { isCapability });
+    return composeReply(hit.entry, hit.score, {
+      isCapability,
+      queryNorm: message,
+      queryTokens: tokenize(working),
+    });
   }
 
   return {
-    text: 'I’m not sure from what’s on this site. Try asking about services, coverage, process, or quotes — or WhatsApp Jean for anything specific.',
-    showWhatsApp: true,
-    emotion: 'confused',
+    ...OFF_TOPIC_FALLBACK,
     topic: lastTopic || 'unknown',
-    followUps: [
-      'What services do you offer?',
-      'Do you cover my area?',
-      'How do I get a quote?',
-    ],
     whatsappHref: WHATSAPP_ASSISTANT_URL,
   };
 }
