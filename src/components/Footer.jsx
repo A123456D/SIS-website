@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LOGO_URL = "/assets/logo.png";
+const LOGO_URL = '/assets/logo.webp';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();

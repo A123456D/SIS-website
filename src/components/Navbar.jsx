@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LOGO_URL = "/assets/logo.png";
+const LOGO_URL = '/assets/logo.webp';
+const LOGO_FALLBACK = '/assets/logo.png';
 
 const navLinks = [
   { label: 'About', hash: 'about' },
@@ -96,13 +97,19 @@ export default function Navbar({ solid = false }) {
             onClick={goHomeTop}
             className="shrink-0"
           >
-            <img
-              src={LOGO_URL}
-              alt="SIS — Systems Integration Specialists"
-              className={`object-contain transition-all duration-500 drop-shadow-md ${
-                isScrolled || mobileMenuOpen ? 'h-12' : 'h-14'
-              }`}
-            />
+            <picture>
+              <source type="image/webp" srcSet={LOGO_URL} />
+              <img
+                src={LOGO_FALLBACK}
+                alt="SIS — Systems Integration Specialists"
+                width={240}
+                height={100}
+                decoding="async"
+                className={`object-contain transition-all duration-500 drop-shadow-md ${
+                  isScrolled || mobileMenuOpen ? 'h-11 sm:h-12' : 'h-12 sm:h-14'
+                }`}
+              />
+            </picture>
           </Link>
 
           <div className="hidden lg:flex items-center gap-5 xl:gap-6 ml-auto">

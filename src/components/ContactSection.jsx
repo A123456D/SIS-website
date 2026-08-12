@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Phone, Mail, MessageCircle, ArrowRight, Send, CheckCircle2 } from 'lucide-react';
 
-const LOGO_URL = "/assets/logo.png";
+const LOGO_URL = '/assets/logo.webp';
 const WHATSAPP_URL =
   'https://wa.me/27646517446?text=' +
   encodeURIComponent("Hi Jean, I'd like to enquire about SIS services.");

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LOGO_URL = "/assets/logo.png";
+const LOGO_URL = '/assets/logo.webp';
+const LOGO_FALLBACK = '/assets/logo.png';
 const INTRO_KEY = 'sis-intro-seen';
 
 export default function IntroScreen({ onComplete }) {
@@ -33,7 +34,7 @@ export default function IntroScreen({ onComplete }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.65, ease: 'easeInOut' }}
-          className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center cursor-pointer"
+          className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center cursor-pointer px-6"
           onClick={finish}
           role="button"
           tabIndex={0}
@@ -42,14 +43,23 @@ export default function IntroScreen({ onComplete }) {
           }}
           aria-label="Skip intro"
         >
-          <motion.img
-            src={LOGO_URL}
-            alt="SIS Logo"
+          <motion.div
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="w-64 h-64 object-contain"
-          />
+          >
+            <picture>
+              <source type="image/webp" srcSet={LOGO_URL} />
+              <img
+                src={LOGO_FALLBACK}
+                alt="SIS Logo"
+                width={256}
+                height={256}
+                decoding="async"
+                className="w-40 h-40 sm:w-56 sm:h-56 md:w-64 md:h-64 object-contain"
+              />
+            </picture>
+          </motion.div>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

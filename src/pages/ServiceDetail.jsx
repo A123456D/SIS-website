@@ -30,7 +30,13 @@ export default function ServiceDetail() {
 
       <section className="relative pt-28 md:pt-32">
         <div className="relative h-[42vh] min-h-[280px] max-h-[420px] overflow-hidden">
-          <img src={service.image} alt="" className="w-full h-full object-cover" />
+          <img
+            src={service.image}
+            alt=""
+            decoding="async"
+            fetchPriority="high"
+            className="w-full h-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/55 to-slate-900/25" />
           <div className="absolute inset-0 flex items-end">
             <div className="max-w-6xl mx-auto w-full px-6 lg:px-8 pb-10">

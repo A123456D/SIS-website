@@ -388,9 +388,9 @@ export default function ChatAssistant() {
 
   return (
     <div
-      className="fixed z-[60] flex flex-col items-end gap-3 pointer-events-none right-3 sm:right-5"
+      className="fixed z-[60] flex flex-col items-end gap-2 sm:gap-3 pointer-events-none right-2 sm:right-5 max-w-[calc(100vw-1rem)]"
       style={{
-        bottom: 'max(5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))',
+        bottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))',
       }}
     >
       <AnimatePresence>
@@ -402,7 +402,7 @@ export default function ChatAssistant() {
             transition={{ duration: 0.22 }}
             role="dialog"
             aria-label="Pip, SIS assistant"
-            className="pointer-events-auto w-[min(100vw-1.5rem,24rem)] h-[min(78vh,36rem)] bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl rounded-2xl overflow-hidden flex flex-col"
+            className="pointer-events-auto w-[min(calc(100vw-1rem),24rem)] h-[min(72dvh,36rem)] sm:h-[min(78vh,36rem)] bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl rounded-2xl overflow-hidden flex flex-col"
           >
             <div className="px-4 py-3 bg-slate-900 text-white flex items-start justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
@@ -659,10 +659,16 @@ export default function ChatAssistant() {
         {!open && !hasSeen && (
           <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-teal-400 border-2 border-white" />
         )}
-        <div className="relative w-[7.5rem] h-[8.75rem] sm:w-[8rem] sm:h-[9.25rem] flex items-end justify-center overflow-visible">
+        <div
+          className={`relative flex items-end justify-center overflow-visible ${
+            open
+              ? 'w-12 h-12 sm:w-14 sm:h-14'
+              : 'w-[6.25rem] h-[7.25rem] sm:w-[8rem] sm:h-[9.25rem]'
+          }`}
+        >
           {open ? (
-            <span className="mb-3 w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center">
-              <X className="w-6 h-6" />
+            <span className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center">
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </span>
           ) : (
             <PipFace animateBlink className="w-full h-full" alt="Pip" />

@@ -17,7 +17,7 @@ const capabilities = [
       'Grid, solar, and battery backup sized for farm loads—so pumps, cold rooms, gates, and essentials stay up when the grid doesn’t.',
     href: '/services/agriculture',
     cta: 'Hybrid power systems',
-    image: '/assets/ag-hybrid-power.png',
+    image: '/assets/ag-hybrid-power.webp',
   },
   {
     icon: Wifi,
@@ -26,7 +26,7 @@ const capabilities = [
       'Long-range links and mesh coverage between house, sheds, and yard—built on MikroTik where town Wi‑Fi won’t reach.',
     href: '/services/wifi',
     cta: 'Rural connectivity',
-    image: '/assets/ag-rural-connectivity.png',
+    image: '/assets/ag-rural-connectivity.webp',
   },
   {
     icon: Camera,
@@ -35,7 +35,7 @@ const capabilities = [
       'HD/4K CCTV with remote alerts—and UPS options so cameras keep watching through power outages.',
     href: '/services/cctv',
     cta: 'CCTV & security',
-    image: '/assets/ag-cctv-security.png',
+    image: '/assets/ag-cctv-security.webp',
   },
 ];
 
@@ -79,6 +79,8 @@ export default function AgricultureSection() {
                 <img
                   src={item.image}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>

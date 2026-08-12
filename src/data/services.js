@@ -9,7 +9,7 @@ export const services = [
     summary: 'Hybrid solar and lithium backup that keeps essentials online through power outages and grid failure.',
     color: 'from-orange-500 to-amber-500',
     bgColor: 'from-orange-50 to-amber-50',
-    image: '/assets/renewable-energy.png',
+    image: '/assets/renewable-energy.webp',
     description:
       'When the grid blinks, the essentials shouldn’t. We design hybrid solar and lithium systems that keep lights, connectivity, security, and key appliances alive—whether you’re powering a home, a commercial floor, or a rural site that can’t afford downtime.',
     features: [
@@ -32,7 +32,7 @@ export const services = [
     summary: 'Lighting, climate, and security controlled as one smart environment.',
     color: 'from-teal-500 to-cyan-500',
     bgColor: 'from-teal-50 to-cyan-50',
-    image: '/assets/home-automation.png',
+    image: '/assets/home-automation.webp',
     description:
       'Home automation integrates technology to control lighting, climate, entertainment systems, and appliances through a centralized system. Using sensors, smart devices, and wireless protocols, your home learns your preferences and responds intuitively.',
     features: [
@@ -55,7 +55,7 @@ export const services = [
     summary: 'Media lounges and dedicated home theatres with cinema-grade picture and sound.',
     color: 'from-indigo-500 to-purple-500',
     bgColor: 'from-indigo-50 to-purple-50',
-    image: '/assets/home-theatre.png',
+    image: '/assets/home-theatre.webp',
     description:
       'From living-room upgrades to dedicated home theatres, we design and install complete audio-visual systems tailored to your space. Precision acoustics, 4K/8K displays, Dolby Atmos surround sound, and calibrated lighting turn any room into a true cinematic experience—whether you want a sleek media lounge or a full private cinema.',
     features: [
@@ -78,7 +78,7 @@ export const services = [
     summary: 'HD/4K cameras with remote alerts—and UPS options that survive power outages.',
     color: 'from-slate-600 to-slate-800',
     bgColor: 'from-slate-50 to-slate-100',
-    image: '/assets/cctv-security.png',
+    image: '/assets/cctv-security.webp',
     description:
       'Modern CCTV should keep watching when the power doesn’t. IP cameras with remote alerts, night vision, and optional UPS so the feed survives an outage—on an estate, a commercial yard, or a farm where every blind spot matters.',
     features: [
@@ -101,7 +101,7 @@ export const services = [
     summary: 'Hybrid power that holds—on the estate, at the warehouse, and past the last streetlight.',
     color: 'from-yellow-500 to-orange-500',
     bgColor: 'from-yellow-50 to-orange-50',
-    image: '/assets/hybrid-power.png',
+    image: '/assets/hybrid-power.webp',
     description:
       'Some sites sit far from easy fixes. We design hybrid systems that braid grid, solar, and battery backup—with surge protection and smart energy planning—so farms, commercial sites, and homes stay productive when the grid doesn’t.',
     features: [
@@ -125,7 +125,7 @@ export const services = [
     summary: 'MikroTik-powered networks that bring stable internet to remote properties.',
     color: 'from-green-500 to-emerald-500',
     bgColor: 'from-green-50 to-emerald-50',
-    image: '/assets/rural-connectivity.png',
+    image: '/assets/rural-connectivity.webp',
     description:
       "Living remotely doesn't mean living disconnected. We specialise in bringing reliable, high-speed internet to rural areas using MikroTik routers at the core of our networks—paired with fixed wireless, mesh coverage, and signal boosting tailored to your location.",
     features: [
