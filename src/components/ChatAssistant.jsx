@@ -34,13 +34,87 @@ const PIP = {
   listen: '/assets/pip/pip-listen.png',
 };
 
+/** 9 cropped blink frames from the sprite sheet (01 open → 08 closed → 09 opening). */
+const PIP_BLINK = Array.from(
+  { length: 9 },
+  (_, i) => `/assets/pip/blink/pip-blink-${String(i + 1).padStart(2, '0')}.png`,
+);
+
+/** Frame indices for one blink cycle (eyes close, then reopen). */
+const BLINK_SEQUENCE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 6, 4, 2, 0];
+const BLINKABLE = new Set(['idle', 'wave', 'happy', 'listen']);
+
 const SOUND_KEY = 'sis-pip-sound';
 const SEEN_KEY = 'sis-pip-seen';
 
-function PipFace({ emotion = 'idle', className = 'w-8 h-8', alt = '' }) {
+let blinkAssetsPreloaded = false;
+function preloadBlinkFrames() {
+  if (blinkAssetsPreloaded || typeof window === 'undefined') return;
+  blinkAssetsPreloaded = true;
+  PIP_BLINK.forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
+}
+
+function PipFace({
+  emotion = 'idle',
+  className = 'w-8 h-8',
+  alt = '',
+  animateBlink = false,
+}) {
+  const [blinkFrame, setBlinkFrame] = useState(0);
+  const canBlink = animateBlink && BLINKABLE.has(emotion || 'idle');
+
+  useEffect(() => {
+    if (!canBlink) {
+      setBlinkFrame(0);
+      return undefined;
+    }
+
+    preloadBlinkFrames();
+
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return undefined;
+
+    let cancelled = false;
+    let timeoutId = 0;
+
+    const scheduleNext = () => {
+      const delay = 2200 + Math.random() * 3800;
+      timeoutId = window.setTimeout(runBlink, delay);
+    };
+
+    const runBlink = () => {
+      let step = 0;
+      const tick = () => {
+        if (cancelled) return;
+        setBlinkFrame(BLINK_SEQUENCE[step]);
+        step += 1;
+        if (step < BLINK_SEQUENCE.length) {
+          timeoutId = window.setTimeout(tick, 38);
+        } else {
+          setBlinkFrame(0);
+          scheduleNext();
+        }
+      };
+      tick();
+    };
+
+    scheduleNext();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [canBlink]);
+
+  const src = canBlink ? PIP_BLINK[blinkFrame] || PIP_BLINK[0] : PIP[emotion] || PIP.idle;
+
   return (
     <img
-      src={PIP[emotion] || PIP.idle}
+      src={src}
       alt={alt}
       className={`${className} object-contain select-none pointer-events-none`}
       draggable={false}
@@ -333,7 +407,7 @@ export default function ChatAssistant() {
             <div className="px-4 py-3 bg-slate-900 text-white flex items-start justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center overflow-hidden shrink-0">
-                  <PipFace emotion={emotion} className="w-11 h-11" />
+                  <PipFace emotion={emotion} animateBlink className="w-11 h-11" />
                 </div>
                 <div className="min-w-0">
                   <div className="font-semibold leading-tight">Pip</div>
@@ -606,7 +680,7 @@ export default function ChatAssistant() {
               <X className="w-6 h-6" />
             </span>
           ) : (
-            <PipFace emotion={emotion} className="w-full h-full" alt="Pip" />
+            <PipFace emotion={emotion} animateBlink className="w-full h-full" alt="Pip" />
           )}
         </motion.div>
       </motion.button>

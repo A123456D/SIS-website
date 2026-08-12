@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "test:pip": "node scripts/test-pip.mjs"
+    "test:pip": "node scripts/test-pip.mjs",
+    "extract:pip-blink": "node scripts/extract-pip-blink.mjs"
   },
   "dependencies": {
 "@hello-pangea/dnd": "^17.0.0",
