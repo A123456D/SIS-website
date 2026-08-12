@@ -3,6 +3,7 @@
  */
 import { services } from '@/data/services';
 import { DOMAIN_KNOWLEDGE } from '@/data/pipDomainKnowledge';
+import { PIP_FAQ_BANK } from '@/data/pipFaqBank';
 
 export const CONTACT = {
   phoneDisplay: '064 651 7446',
@@ -227,13 +228,59 @@ export function buildPipKnowledge() {
     push(d);
   }
 
-  // —— How SIS integrates (must beat “services” catalogue matching) ——
+  // Large FAQ bank (100 per service + integration)
+  for (const faq of PIP_FAQ_BANK) {
+    push(faq);
+  }
+
+  // —— How SIS integrates ——
+  push({
+    id: 'integrate-how',
+    topic: 'integration',
+    title: 'How do systems get integrated?',
+    answer:
+      'We start with one plan for the property: which circuits must stay on, where cameras and Wi‑Fi need to live, and how automation/AV should share that power and network. Then we install in a sensible order—often power and connectivity foundations first, then security, automation, and AV—so everything shares the same design instead of fighting later.',
+    bullets: [
+      'One design pass across power, network, security, automation, and AV',
+      'Shared circuits / backup priorities so cameras and control survive outages',
+      'Phased rollout if you don’t want everything on day one',
+      'Handover so you know how the joined-up system behaves',
+    ],
+    tags: [
+      'integrate',
+      'integration',
+      'integrated',
+      'together',
+      'how',
+      'process',
+      'systems',
+      'integerated',
+    ],
+    keys: [
+      'how do systems get integrated',
+      'how are systems integrated',
+      'how do you integrate',
+      'how does integration work',
+      'how are they integrated',
+      'how do they work together',
+      'how systems get integrated',
+      'get integrated',
+      'systems get integrated',
+      'how integration works',
+    ],
+    path: null,
+    section: '/#process',
+    followUps: ['Do you integrate all services?', 'What services do you offer?', 'How does the process work?'],
+    whatsappText: 'Hi Jean, can you explain how you’d integrate a few SIS systems on my property?',
+    priority: 19,
+  });
+
   push({
     id: 'integrate-all',
     topic: 'integration',
     title: 'Do you integrate all services?',
     answer:
-      'Yes. That’s the whole point of SIS. We don’t install solar, CCTV, automation, AV, and connectivity as separate silos—we design them as one environment so power, security, and control actually work together, and you’re not juggling mismatched vendors.',
+      'That’s the whole point of SIS. We don’t install solar, CCTV, automation, AV, and connectivity as separate silos—we design them as one environment so power, security, and control actually work together, and you’re not juggling mismatched vendors.',
     bullets: [
       'One plan across power, security, automation, AV, and connectivity',
       'Phased installs if you want to grow over time',
@@ -265,7 +312,7 @@ export function buildPipKnowledge() {
     ],
     path: null,
     section: '/#packages',
-    followUps: ['Full property integration?', 'What services do you offer?', 'How does the process work?'],
+    followUps: ['How do systems get integrated?', 'What services do you offer?', 'How does the process work?'],
     whatsappText: 'Hi Jean, I’d like a joined-up system across a few SIS services.',
     priority: 18,
   });

@@ -16,11 +16,13 @@ function rewrite(name, destName) {
     .replaceAll("from '@/data/services'", "from './services.js'")
     .replaceAll("from '@/data/siteKnowledge'", "from './_tmp_sk.mjs'")
     .replaceAll("from '@/data/pipNav'", "from './_tmp_nav.mjs'")
-    .replaceAll("from '@/data/pipDomainKnowledge'", "from './_tmp_domain.mjs'");
+    .replaceAll("from '@/data/pipDomainKnowledge'", "from './_tmp_domain.mjs'")
+    .replaceAll("from '@/data/pipFaqBank'", "from './_tmp_faq.mjs'");
   writeFileSync(join(dataDir, destName), src);
 }
 
 rewrite('pipDomainKnowledge.js', '_tmp_domain.mjs');
+rewrite('pipFaqBank.js', '_tmp_faq.mjs');
 rewrite('siteKnowledge.js', '_tmp_sk.mjs');
 rewrite('pipNav.js', '_tmp_nav.mjs');
 rewrite('assistantKnowledge.js', '_tmp_ak.mjs');
@@ -32,7 +34,7 @@ const { getAssistantReply } = await import(
 const cases = [
   ['take me to faq', (r) => r.sectionId === 'faq' && r.autoJump],
   ['show contact', (r) => r.sectionId === 'contact' && r.autoJump],
-  ['do you guys intergrate all your services', (r) => /^yes/i.test(r.text) && /one environment|together|silos/i.test(r.text)],
+  ['do you guys intergrate all your services', (r) => /one environment|together|silos/i.test(r.text)],
   ['what is hybrid solar backup?', (r) => /hybrid|battery|inverter/i.test(r.text)],
   ['how big a battery do I need?', (r) => /priority|loads|kwh|size/i.test(r.text)],
   ['what is a hybrid inverter?', (r) => /inverter/i.test(r.text)],
@@ -50,6 +52,10 @@ const cases = [
   ['Where is Jean Avenue?', (r) => r.sectionId === 'contact' || /jean|contact|whatsapp/i.test(r.text)],
   ['can you fix my roof', (r) => /don.?t know|built for sis|ask me about/i.test(r.text)],
   ['can you paint my house', (r) => /don.?t know|built for sis|ask me about/i.test(r.text)],
+  ['Do you integrate all your services?', (r) => /one environment|integrate|silos/i.test(r.text) && !/^yes\./i.test(r.text)],
+  ['how do systems get integerated', (r) => /plan|order|circuits|phased|network/i.test(r.text) && !/^yes\b/i.test(r.text)],
+  ['Do you install solar?', (r) => /solar|hybrid|backup|jean|whatsapp/i.test(r.text)],
+  ['How do solar and CCTV work together?', (r) => /camera|cctv|backup|outage|power|integrate/i.test(r.text)],
   ['xyzzyfoobar', (r) => r.emotion === 'confused' || /don.?t know|not sure|built for sis/i.test(r.text)],
 ];
 
@@ -67,7 +73,7 @@ const followOk = /commercial/i.test(follow.text);
 console.log(`${followOk ? 'PASS' : 'FAIL'}  follow-up after solar`);
 if (!followOk) failed += 1;
 
-for (const f of ['_tmp_domain.mjs', '_tmp_sk.mjs', '_tmp_nav.mjs', '_tmp_ak.mjs']) {
+for (const f of ['_tmp_domain.mjs', '_tmp_faq.mjs', '_tmp_sk.mjs', '_tmp_nav.mjs', '_tmp_ak.mjs']) {
   unlinkSync(join(dataDir, f));
 }
 

@@ -110,8 +110,9 @@ const SYNONYMS = [
   [/homestead/g, 'farm rural'],
   [/smallholding/g, 'farm rural'],
   [/plot\b/g, 'farm rural'],
-  [/intergrate|integate|integrting/g, 'integrate'],
-  [/intergration|integartion/g, 'integration'],
+  [/integerated|intergrated/g, 'integrated'],
+  [/integerate|intergrate|integate|integrting/g, 'integrate'],
+  [/integeration|intergration|integartion/g, 'integration'],
 ];
 
 const AUDIENCE = new Set([
@@ -488,8 +489,10 @@ function composeReply(entry, score, { isCapability, queryNorm, queryTokens } = {
   const entryHay = normalize(
     [entry.title, ...(entry.tags || []), ...(entry.keys || [])].join(' ')
   );
+  const askingHowWhatWhy = /\b(how|what|why|when|where)\b/.test(queryNorm || '');
   const capabilityFits =
     isCapability &&
+    !askingHowWhatWhy &&
     (entry.id.startsWith('service-') || entry.id.startsWith('domain-')) &&
     queryTokens?.some((t) => SERVICEISH.has(t) && (entryHay.includes(t) || SIS_SCOPE.has(t)));
 

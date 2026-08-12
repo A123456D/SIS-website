@@ -187,13 +187,13 @@ function contentBounds(data, width, height, alphaThreshold = 16) {
 }
 
 function cellRect(row, col) {
-  // Labels bleed under each row into the next; cut top/bottom bands on every cell.
-  const topInset = Math.floor(CELL_H * (row === 0 ? 0.02 : 0.15));
-  const bottom = row * CELL_H + Math.floor(CELL_H * 0.84);
+  // Labels sit under each figure and bleed into the next row’s top.
+  const topInset = Math.floor(CELL_H * (row === 0 ? 0.015 : 0.12));
+  const bottom = row * CELL_H + Math.floor(CELL_H * 0.86);
   const top = row * CELL_H + topInset;
-  const left = col * CELL_W + 8;
-  const maxRight = col === COLS - 1 ? 806 : (col + 1) * CELL_W - 8;
-  const width = Math.min(CELL_W - 16, maxRight - left);
+  const left = col * CELL_W + 6;
+  const maxRight = col === COLS - 1 ? 806 : (col + 1) * CELL_W - 6;
+  const width = Math.min(CELL_W - 12, maxRight - left);
   const height = bottom - top;
   return { left, top, width, height };
 }
@@ -239,63 +239,60 @@ async function main() {
     }
   }
 
-  let maxW = 0;
-  let maxH = 0;
+  let targetW = 0;
   for (const f of frames) {
-    maxW = Math.max(maxW, f.crop.width);
-    maxH = Math.max(maxH, f.crop.height);
+    targetW = Math.max(targetW, f.crop.width);
   }
-  maxW = Math.ceil(maxW / 2) * 2;
-  maxH = Math.ceil(maxH / 2) * 2 + 4; // small slack for rounding
-  console.log(`canvas ${maxW}x${maxH}`);
+  targetW = Math.ceil(targetW / 2) * 2;
 
+  // Scale every character to the same width so blink frames don’t shrink/grow.
+  const scaledFrames = [];
+  let canvasH = 0;
   for (const f of frames) {
-    // Normalize by fitting inside canvas; top-align so the head/eyes don't jump.
-    const scaled = await sharp(f.data, {
+    const cropped = await sharp(f.data, {
       raw: { width: f.info.width, height: f.info.height, channels: 4 },
     })
       .extract(f.crop)
-      .resize({
-        width: maxW,
-        height: maxH,
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
+      .resize({ width: targetW })
       .png()
       .toBuffer();
+    const meta = await sharp(cropped).metadata();
+    canvasH = Math.max(canvasH, meta.height);
+    scaledFrames.push({ index: f.index, buf: cropped, width: meta.width, height: meta.height });
+  }
+  canvasH = Math.ceil(canvasH / 2) * 2;
+  console.log(`canvas ${targetW}x${canvasH} (uniform width scale)`);
 
-    const scaledMeta = await sharp(scaled).metadata();
-    const left = Math.max(0, Math.round((maxW - scaledMeta.width) / 2));
-    const top = 0;
-
+  for (const f of scaledFrames) {
+    const left = Math.max(0, Math.round((targetW - f.width) / 2));
     const outName = `pip-blink-${String(f.index + 1).padStart(2, '0')}.png`;
     await sharp({
       create: {
-        width: maxW,
-        height: maxH,
+        width: targetW,
+        height: canvasH,
         channels: 4,
         background: { r: 0, g: 0, b: 0, alpha: 0 },
       },
     })
-      .composite([{ input: scaled, left, top }])
+      .composite([{ input: f.buf, left, top: 0 }])
       .png()
       .toFile(path.join(outDir, outName));
-    console.log('wrote', outName, `${scaledMeta.width}x${scaledMeta.height}`);
+    console.log('wrote', outName, `${f.width}x${f.height}`);
   }
 
   await sharp({
     create: {
-      width: maxW * COLS,
-      height: maxH * ROWS,
+      width: targetW * COLS,
+      height: canvasH * ROWS,
       channels: 4,
       background: { r: 36, g: 40, b: 46, alpha: 1 },
     },
   })
     .composite(
-      frames.map((f) => ({
+      scaledFrames.map((f) => ({
         input: path.join(outDir, `pip-blink-${String(f.index + 1).padStart(2, '0')}.png`),
-        left: (f.index % COLS) * maxW,
-        top: Math.floor(f.index / COLS) * maxH,
+        left: (f.index % COLS) * targetW,
+        top: Math.floor(f.index / COLS) * canvasH,
       })),
     )
     .png()

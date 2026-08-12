@@ -34,39 +34,32 @@ const PIP = {
   listen: '/assets/pip/pip-listen.png',
 };
 
-/** 9 cropped blink frames from the sprite sheet (01 open → 08 closed → 09 opening). */
+/** Full-body blink frames from the sheet (same pose; eyes only change). */
 const PIP_BLINK = Array.from(
   { length: 9 },
   (_, i) => `/assets/pip/blink/pip-blink-${String(i + 1).padStart(2, '0')}.png`,
 );
 
-/** Frame indices for one blink cycle (eyes close, then reopen). */
-const BLINK_SEQUENCE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 6, 4, 2, 0];
-/** ms per frame — slightly slower on the closed hold for a natural blink */
-const BLINK_FRAME_MS = [55, 50, 45, 40, 40, 40, 45, 70, 45, 45, 50, 55, 55];
-const BLINKABLE = new Set(['idle', 'wave', 'happy', 'listen']);
+/** Calm blink: open → closed → open */
+const BLINK_SEQUENCE = [0, 1, 2, 4, 6, 7, 6, 4, 2, 1, 0];
+const BLINK_FRAME_MS = [55, 45, 40, 40, 45, 90, 45, 40, 40, 45, 55];
 
 const SOUND_KEY = 'sis-pip-sound';
 const SEEN_KEY = 'sis-pip-seen';
 
-let blinkAssetsPreloaded = false;
-function preloadBlinkFrames() {
-  if (blinkAssetsPreloaded || typeof window === 'undefined') return;
-  blinkAssetsPreloaded = true;
+let blinkPreloaded = false;
+function preloadBlink() {
+  if (blinkPreloaded || typeof window === 'undefined') return;
+  blinkPreloaded = true;
   PIP_BLINK.forEach((src) => {
     const img = new Image();
     img.src = src;
   });
 }
 
-function PipFace({
-  emotion = 'idle',
-  className = 'w-8 h-8',
-  alt = '',
-  animateBlink = false,
-}) {
+function PipFace({ emotion = 'idle', className = 'w-8 h-8', alt = '', animateBlink = false }) {
   const [blinkFrame, setBlinkFrame] = useState(0);
-  const canBlink = animateBlink && BLINKABLE.has(emotion || 'idle');
+  const canBlink = animateBlink;
 
   useEffect(() => {
     if (!canBlink) {
@@ -74,7 +67,7 @@ function PipFace({
       return undefined;
     }
 
-    preloadBlinkFrames();
+    preloadBlink();
 
     const reduceMotion =
       typeof window !== 'undefined' &&
@@ -85,8 +78,7 @@ function PipFace({
     let timeoutId = 0;
 
     const scheduleNext = () => {
-      const delay = 2800 + Math.random() * 4200;
-      timeoutId = window.setTimeout(runBlink, delay);
+      timeoutId = window.setTimeout(runBlink, 3200 + Math.random() * 4200);
     };
 
     const runBlink = () => {
@@ -119,7 +111,7 @@ function PipFace({
     <img
       src={src}
       alt={alt}
-      className={`${className} object-contain select-none pointer-events-none`}
+      className={`${className} object-contain object-bottom select-none pointer-events-none`}
       draggable={false}
     />
   );
@@ -396,9 +388,9 @@ export default function ChatAssistant() {
 
   return (
     <div
-      className="fixed z-[60] flex flex-col items-end gap-3 pointer-events-none right-4 sm:right-5"
+      className="fixed z-[60] flex flex-col items-end gap-3 pointer-events-none right-3 sm:right-5"
       style={{
-        bottom: 'max(1.75rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))',
+        bottom: 'max(5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem))',
       }}
     >
       <AnimatePresence>
@@ -415,7 +407,7 @@ export default function ChatAssistant() {
             <div className="px-4 py-3 bg-slate-900 text-white flex items-start justify-between gap-3 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center overflow-hidden shrink-0">
-                  <PipFace emotion={emotion} animateBlink className="w-11 h-11" />
+                  <PipFace emotion={emotion} className="w-11 h-11" />
                 </div>
                 <div className="min-w-0">
                   <div className="font-semibold leading-tight">Pip</div>
@@ -646,7 +638,7 @@ export default function ChatAssistant() {
         )}
       </AnimatePresence>
 
-      <motion.button
+      <button
         type="button"
         onClick={toggleOpen}
         onMouseEnter={() => {
@@ -656,35 +648,27 @@ export default function ChatAssistant() {
             play('hover');
           }
         }}
-        className="pointer-events-auto relative group bg-transparent border-0 p-0 overflow-visible"
+        className="pointer-events-auto relative bg-transparent border-0 p-0 overflow-visible"
         aria-label={open ? 'Close Pip' : 'Open Pip, SIS AI assistant'}
-        whileHover={open ? undefined : { scale: 1.03 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 420, damping: 28 }}
       >
         {!open && (
-          <span className="absolute -top-9 right-1 whitespace-nowrap rounded-full bg-slate-900 text-white text-xs font-medium px-3 py-1 shadow-lg">
+          <span className="absolute -top-8 right-0 whitespace-nowrap rounded-full bg-slate-900 text-white text-xs font-medium px-3 py-1 shadow-lg">
             Ask Pip
           </span>
         )}
         {!open && !hasSeen && (
-          <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-teal-400 border-2 border-white" />
+          <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-teal-400 border-2 border-white" />
         )}
-        <div className="relative w-[6.5rem] h-[7.25rem] sm:w-[7rem] sm:h-[7.75rem] flex items-end justify-center overflow-visible">
+        <div className="relative w-[7.5rem] h-[8.75rem] sm:w-[8rem] sm:h-[9.25rem] flex items-end justify-center overflow-visible">
           {open ? (
-            <span className="mb-2 w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center">
+            <span className="mb-3 w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center">
               <X className="w-6 h-6" />
             </span>
           ) : (
-            <PipFace
-              emotion={emotion}
-              animateBlink
-              className="w-full h-full drop-shadow-md"
-              alt="Pip"
-            />
+            <PipFace animateBlink className="w-full h-full" alt="Pip" />
           )}
         </div>
-      </motion.button>
+      </button>
     </div>
   );
 }
